@@ -31,7 +31,7 @@ for name in sorted(args["classifiers"]):
     print("===================")
     estimator = ESTIMATORS[name]
     time_start = time()
-    estimator.SGD(training_data, 20, 5, 2.0, test_data=test_data)
+    estimator.SGD(training_data, 20, 10, 2.0, test_data=test_data)
     train_test_time = time() - time_start
     print("done")
     print("Training and testing time: {0}".format(train_test_time))
