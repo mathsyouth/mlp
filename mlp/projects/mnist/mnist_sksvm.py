@@ -11,7 +11,7 @@ from sklearn import svm
 from time import time
 
 # My libraries
-from ml_alg import mnist_loader
+from mlp.ml_alg import mnist_loader
 
 def svm_baseline():
     print "Load data"
