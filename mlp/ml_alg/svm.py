@@ -7,7 +7,7 @@ class SVM(object):
     Support Vector Machine (SVM)."""
 
     def __init__(self, X, y, C, alphas, b, errors, kernel='linear_kernel',
-                 eps=1e-3, max_passes=1000):
+                 eps=1e-3, max_passes=100):
         self.X = X               # training data vector
         self.y = y               # class label vector
         self.C = C               # regularization parameter
@@ -114,7 +114,7 @@ class SVM(object):
         else:
             L = max(0, alph1 + alph2 - self.C)
             H = min(self.C, alph1 + alph2)
-        if np.abs(L - H) > H * self.eps:
+        if np.abs(L - H) < H * self.eps:
             return 0
 
         # Compute kernel & 2nd derivative eta
@@ -123,12 +123,14 @@ class SVM(object):
         k22 = self.kernel(self.X[i2], self.X[i2])
         eta = 2 * k12 - k11 - k22
         # Compute new alpha 2 (a2) if eta is negative
-        if eta < self.eps:
+        if eta < 0:
             a2 = alph2 - y2 * (E1 - E2) / eta
             # Clip a2 based on bounds L & H
             if a2 < L:
+                # print "alph2 is on the lower bound L!"
                 a2 = L
             elif a2 > H:
+                # print "alph2 is on the high bound H!"
                 a2 = H
         # If eta is non-negative, move new a2 to bound with greater objective
         # function value
@@ -148,7 +150,7 @@ class SVM(object):
                 a2 = alph2
 
         # If examples can't be optimized within tolerance, skip this pair
-        if np.abs(a2 - alph2) < self.eps * a2:
+        if np.abs(a2 - alph2) < self.eps * (a2 + alph2 + self.eps):
             return 0
         # Calculate new alpha 1 (a1)
         a1 = alph1 + s * (alph2 - a2)
@@ -161,9 +163,9 @@ class SVM(object):
         b1 = self.b - E1 - y1 * (a1 - alph1) * k11 - y2 * (a2 - alph2) * k12
         b2 = self.b - E2 - y1 * (a1 - alph1) * k12 - y2 * (a2 - alph2) * k22
         # Set new threshold based on if a1 or a2 is bound by L and/or H
-        if self.eps < a1 < self.C * (1 - self.eps):
+        if 0 < a1 < self.C:
             b_new = b1
-        elif self.eps < a2 < self.C * (1 - self.eps):
+        elif 0 < a2 < self.C:
             b_new = b2
         # Average thresholds if both are bound
         else:
@@ -173,7 +175,7 @@ class SVM(object):
         # Update error cache
         # Error cache for optimized alphas is set to 0 if they're unbound
         for index, alph in zip([i1, i2], [a1, a2]):
-            if self.eps < alph < self.C * (1 - self.eps):
+            if 0 < alph < self.C:
                 self.errors[index] = 0.0
         # Set non-optimized errors based on equation 12.11 in Platt's book
         non_opt = [n for n in range(len(self.X)) if (n != i1 and n != i2)]
@@ -193,19 +195,23 @@ class SVM(object):
         # Proceed if error is within specified epsilon (eps)
         if (r2 < -self.eps and alph2 < self.C) or (r2 > self.eps and
                                                     alph2 > 0):
-            if (len(self.alphas[(self.alphas > self.eps) &
-                (self.alphas < self.C * (1 - self.eps))]) > 1):
+            if len(self.alphas[(self.alphas > 0) &
+                               (self.alphas < self.C)]) > 1:
                 # Use 2nd choice heuristic is choose max difference in error
+                # Todo: This heuristic choice always make step_result is == 0
+                #  There needs some explanation.
                 if self.errors[i2] > 0:
                     i1 = np.argmin(self.errors)
                 else:
                     i1 = np.argmax(self.errors)
+                # print "Before heuristic 1!"
                 step_result = self.take_step(i1, i2)
                 if step_result:
+                    # print "Heuristic 1 succeeds!"
                     return 1
             # Loop through non-zero and non-C alphas, starting at a random point
-            for i1 in np.roll(np.where((self.alphas > self.eps) &
-                (self.alphas < self.C * (1 - self.eps)))[0],
+            for i1 in np.roll(np.where((self.alphas > 0) &
+                                       (self.alphas < self.C))[0],
                 np.random.choice(np.arange(len(self.X)))):
                 step_result = self.take_step(i1, i2)
                 if step_result:
@@ -237,17 +243,14 @@ class SVM(object):
                         self._obj.append(obj_result)
             else:
                 # loop over examples where alphas are not 0 & not C
-                for i in np.where((self.alphas > self.eps) &
+                for i in np.where((self.alphas > 0) &
                                   (self.alphas < self.C))[0]:
                     examine_result = self.examine_example(i)
                     numChanged += examine_result
                     if examine_result:
                         obj_result = self.objective_function(self.alphas)
                         self._obj.append(obj_result)
-            if numChanged == 0:
-                passes += 1
-            else:
-                passes = 0
+            passes += 1
             if examineAll == 1:
                 examineAll = 0
             elif numChanged == 0:

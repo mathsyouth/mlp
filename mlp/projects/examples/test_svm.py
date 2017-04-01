@@ -40,8 +40,10 @@ def test_blobs():
                 initial_errors, kernel)
     # Initialize error cache
     model.errors = model.decision_function(X) - y
-    np.random.seed(0)
+    # np.random.seed(0)
     model.train()
+    plt.plot(range(len(model._obj)), model._obj)
+    plt.show()
     fig, ax = plt.subplots()
     grid, ax = model.plot_decision_boundary(ax)
     plt.show()
