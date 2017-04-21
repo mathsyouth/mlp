@@ -4,7 +4,7 @@ import argparse
 
 from time import time
 
-from mlp.ml_alg import mnist_loader
+from mlp.projects.mnist import mnist_loader
 from mlp.ml_alg import network
 
 

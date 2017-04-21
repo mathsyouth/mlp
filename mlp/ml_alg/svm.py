@@ -73,24 +73,26 @@ class SVM(object):
 
         # Generate coordinate grid of shape [resolution x resolution]
         # and evaluate the model over the entire space
-        x_range = np.linspace(self.X[:,0].min(), self.X[:,0].max(), resolution)
-        y_range = np.linspace(self.X[:,1].min(), self.X[:,1].max(), resolution)
+        x_range = np.linspace(self.X[:, 0].min(), self.X[:, 0].max(),
+                              resolution)
+        y_range = np.linspace(self.X[:, 1].min(), self.X[:, 1].max(),
+                              resolution)
         grid = [[self.decision_function(np.array([xr, yr])
                                         ) for yr in y_range] for xr in x_range]
-        grid = np.array(grid).reshape(len(x_range), len(y_range))
+        grid = np.array(grid).reshape(resolution, resolution)
 
         # Plot decision contours using grid and
         # make a scatter plot of training data
         ax.contour(x_range, y_range, grid, (-1, 0, 1), linewidths=(1, 1, 1),
                    linestyles=('--', '-', '--'), colors=colors)
-        ax.scatter(self.X[:,0], self.X[:,1],
-                   c=self.y, cmap=plt.cm.viridis, lw=0, alpha=0.5)
+        ax.scatter(self.X[:, 0], self.X[:, 1],
+                   c=self.y, cmap=plt.cm.bone, lw=0, alpha=0.5)
 
         # Plot support vectors (non-zero alphas)
         # as circled points (linewidth > 0)
-        mask = self.alphas != 0.0
-        ax.scatter(self.X[:,0][mask], self.X[:,1][mask],
-                   c=self.y[mask], cmap=plt.cm.viridis)
+        mask = self.alphas > 1e-6
+        ax.scatter(self.X[:, 0][mask], self.X[:, 1][mask],
+                   c=self.y[mask], cmap=plt.cm.bone)
         return grid, ax
 
     def take_step(self, i1, i2):

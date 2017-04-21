@@ -9,7 +9,7 @@ from mlp.ml_alg.svm import SVM
 
 def generate_blobs():
     X, y = make_blobs(n_samples=1000, centers=2,
-                            n_features=2, random_state=1)
+                      n_features=2, random_state=1)
     # Scale the data to be centered at the origin with a unit
     # standard deviation.
     X = StandardScaler().fit_transform(X, y)
